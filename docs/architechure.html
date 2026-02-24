@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZKProxy — Universal Verification Protocol for AI Agents</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oxanium:wght@400;700;800&display=swap');
+  :root {
+    --bg:#040d1a; --grid:rgba(0,140,255,0.04);
+    --green:#00ffaa; --blue:#1a8cff;
+    --blue-mid:#2a7fff; --blue-sky:#38b6ff;
+    --blue-corn:#4d8fff; --blue-steel:#60cfff;
+    --red:#ff3355;
+    --text:#b8d4f0; --panel:rgba(4,15,35,0.96);
+    --cyan:#60cfff; --cyan-dim:rgba(96,207,255,0.5);
+    --card-bg:rgba(8,22,50,0.85); --card-border:rgba(77,143,255,0.25);
+    --zk-glow:rgba(77,143,255,0.4);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);font-family:'Oxanium',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden;position:relative;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0;}
+  body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:1;}
+  .wrapper{position:relative;z-index:2;padding:32px 24px 56px;max-width:1200px;margin:0 auto;}
+
+  header{text-align:center;margin-bottom:12px;}
+  header h1{font-weight:800;font-size:clamp(1.5rem,3.5vw,2.4rem);letter-spacing:0.06em;color:var(--blue-corn);text-shadow:0 0 28px var(--zk-glow);text-transform:uppercase;line-height:1.2;}
+  header p.subtitle{font-family:'Share Tech Mono',monospace;font-size:0.78rem;color:var(--cyan-dim);letter-spacing:0.12em;margin-top:10px;}
+  header p.tagline{font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(77,143,255,0.45);letter-spacing:0.14em;margin-top:6px;}
+  .divider{width:100%;height:1px;background:linear-gradient(90deg,transparent,var(--blue-corn),rgba(26,140,255,0.5),transparent);margin:20px 0 32px;opacity:0.35;}
+
+  h2.section-title{font-size:1.1rem;font-weight:700;color:var(--cyan);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:20px;text-align:center;text-shadow:0 0 14px rgba(96,207,255,0.3);}
+
+  /* ZK Properties Banner */
+  .zk-props{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:40px;}
+  .zk-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:22px 20px;text-align:center;position:relative;overflow:hidden;transition:border-color 0.3s,box-shadow 0.3s;}
+  .zk-card:hover{border-color:var(--blue-corn);box-shadow:0 0 24px rgba(77,143,255,0.15);}
+  .zk-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--blue-corn));opacity:0.6;}
+  .zk-card h3{font-size:0.92rem;font-weight:700;color:var(--blue-corn);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:10px;}
+  .zk-card p{font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:rgba(184,212,240,0.6);line-height:1.7;letter-spacing:0.04em;}
+  .zk-card .icon{font-size:1.8rem;margin-bottom:10px;display:block;color:var(--blue-corn);text-shadow:0 0 16px var(--zk-glow);}
+
+  /* Architecture SVG */
+  .arch-section{margin-bottom:40px;}
+  @keyframes dash{to{stroke-dashoffset:-20;}}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .da{animation:dash .8s linear infinite;}
+  .db{animation:dash 1.2s linear infinite;}
+
+  /* Comparison Section */
+  .comparison-page{margin-bottom:48px;page-break-before:always;}
+  .comparison-page .intro{font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(184,212,240,0.55);line-height:1.8;text-align:center;max-width:860px;margin:0 auto 28px;letter-spacing:0.03em;}
+
+  table{width:100%;border-collapse:collapse;font-family:'Share Tech Mono',monospace;font-size:0.72rem;}
+  th{background:rgba(77,143,255,0.08);color:var(--blue-corn);font-weight:700;text-transform:uppercase;letter-spacing:0.1em;padding:12px 16px;text-align:left;border-bottom:1px solid rgba(77,143,255,0.2);}
+  td{padding:10px 16px;border-bottom:1px solid rgba(77,143,255,0.08);color:rgba(184,212,240,0.7);}
+  tr:hover td{background:rgba(77,143,255,0.04);}
+  .check{color:var(--green);text-shadow:0 0 8px rgba(0,255,170,0.4);}
+  .cross{color:var(--red);opacity:0.6;}
+  .partial{color:var(--blue-sky);opacity:0.7;}
+  .highlight-row td{background:rgba(77,143,255,0.06);border-left:3px solid var(--blue-corn);}
+  th.zk-col{color:var(--green);text-shadow:0 0 8px rgba(0,255,170,0.3);}
+
+  /* Principle Cards */
+  .principle-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin:28px 0 40px;}
+  .principle-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:22px 20px;position:relative;overflow:hidden;transition:border-color 0.3s,box-shadow 0.3s;}
+  .principle-card:hover{border-color:var(--blue-corn);box-shadow:0 0 20px rgba(77,143,255,0.12);}
+  .principle-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue-corn),var(--green));opacity:0.5;}
+  .principle-card h3{font-size:0.85rem;font-weight:700;color:var(--blue-corn);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;}
+  .principle-card p{font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(184,212,240,0.55);line-height:1.7;}
+  .principle-card .vs{font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:rgba(255,51,85,0.5);margin-top:10px;line-height:1.6;border-top:1px solid rgba(255,51,85,0.1);padding-top:8px;}
+
+  /* Network Section */
+  .network-page{margin-bottom:48px;page-break-before:always;}
+  .net-compare{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0 32px;}
+  .net-box{background:var(--card-bg);border:1px solid var(--card-border);border-radius:6px;padding:22px 20px;position:relative;overflow:hidden;}
+  .net-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;opacity:0.6;}
+  .net-box.legacy::before{background:var(--red);}
+  .net-box.zkp::before{background:var(--green);}
+  .net-box h3{font-size:0.9rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:12px;}
+  .net-box.legacy h3{color:rgba(255,51,85,0.7);}
+  .net-box.zkp h3{color:var(--green);}
+  .net-box ul{list-style:none;padding:0;}
+  .net-box ul li{font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(184,212,240,0.55);line-height:2;padding-left:18px;position:relative;}
+  .net-box ul li::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:2px;}
+  .net-box.legacy ul li::before{background:rgba(255,51,85,0.3);border:1px solid rgba(255,51,85,0.4);}
+  .net-box.zkp ul li::before{background:rgba(0,255,170,0.2);border:1px solid rgba(0,255,170,0.4);}
+
+  /* Protocol Analogy */
+  .protocol-section{text-align:center;margin:32px 0 40px;padding:28px 24px;border:1px solid rgba(77,143,255,0.15);background:rgba(77,143,255,0.02);border-radius:6px;}
+  .protocol-section h3{font-size:1rem;font-weight:700;color:var(--blue-corn);letter-spacing:0.08em;margin-bottom:14px;}
+  .protocol-section p{font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(184,212,240,0.55);line-height:1.8;max-width:800px;margin:0 auto;}
+  .protocol-analogy{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;margin-top:20px;max-width:700px;margin-left:auto;margin-right:auto;}
+  .proto-box{padding:16px;border-radius:6px;text-align:center;}
+  .proto-box.http{background:rgba(255,51,85,0.05);border:1px solid rgba(255,51,85,0.2);}
+  .proto-box.https{background:rgba(0,255,170,0.05);border:1px solid rgba(0,255,170,0.2);}
+  .proto-box h4{font-size:0.85rem;font-weight:700;margin-bottom:6px;}
+  .proto-box.http h4{color:rgba(255,51,85,0.7);}
+  .proto-box.https h4{color:var(--green);}
+  .proto-box p{font-family:'Share Tech Mono',monospace;font-size:0.65rem;line-height:1.6;}
+  .proto-arrow{font-size:1.5rem;color:var(--blue-corn);text-shadow:0 0 12px var(--zk-glow);}
+
+  /* Benchmark */
+  .bench-section{margin-bottom:40px;}
+  .bench-section h3{font-size:0.85rem;font-weight:700;color:var(--blue-corn);letter-spacing:0.08em;text-transform:uppercase;margin:20px 0 12px;text-align:center;}
+  .bench-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}
+
+  /* Status Bar */
+  .status-bar{display:flex;justify-content:space-between;align-items:center;margin-top:24px;padding:11px 20px;border:1px solid rgba(42,127,255,0.12);background:rgba(42,127,255,0.02);}
+  .si{font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:rgba(96,207,255,0.45);letter-spacing:0.1em;display:flex;align-items:center;gap:7px;}
+  .sd{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;box-shadow:0 0 6px var(--green);}
+  .sd.b{background:var(--blue-corn);box-shadow:0 0 6px var(--blue-corn);animation-delay:.6s;}
+
+  @media(max-width:800px){
+    .zk-props,.principle-grid,.net-compare,.bench-grid{grid-template-columns:1fr;}
+    .protocol-analogy{grid-template-columns:1fr;}
+    .proto-arrow{transform:rotate(90deg);}
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <header>
+    <h1>ZKProxy</h1>
+    <p class="subtitle">Universal Zero-Knowledge Verification Protocol for AI Agents</p>
+    <p class="tagline">// VERIFY FIRST &middot; ACT SECOND &middot; PROVE ALWAYS //</p>
+  </header>
+  <div class="divider"></div>
+
+  <!-- ZK Properties -->
+  <div class="zk-props">
+    <div class="zk-card">
+      <span class="icon">&#x2200;</span>
+      <h3>Universality</h3>
+      <p>Any ONNX guard model compiles to a ZK circuit. Any agent framework can adopt the protocol. Language-agnostic, architecture-agnostic.</p>
+    </div>
+    <div class="zk-card">
+      <span class="icon">&#x03C3;</span>
+      <h3>Trace of Computation</h3>
+      <p>Every inference step is cryptographically recorded. The proof attests that a specific input produced a specific output through the exact computation graph.</p>
+    </div>
+    <div class="zk-card">
+      <span class="icon">&#x2713;</span>
+      <h3>Instance Verification</h3>
+      <p>Third parties verify the proof without seeing model weights. The model stays proprietary. The decision stays auditable.</p>
+    </div>
+  </div>
+
+  <!-- Architecture Flow -->
+  <div class="arch-section">
+    <h2 class="section-title">Architecture Flow</h2>
+    <svg viewBox="0 0 1000 240" style="width:100%;overflow:visible;display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glowG"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="aBlue" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3Z" fill="#4d8fff"/></marker>
+        <marker id="aGreen" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3Z" fill="#00ffaa"/></marker>
+        <marker id="aRed" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3Z" fill="#ff3355"/></marker>
+      </defs>
+
+      <!-- ZK Proof boundary -->
+      <rect x="240" y="10" width="440" height="210" rx="8" fill="none" stroke="rgba(77,143,255,0.3)" stroke-width="2" stroke-dasharray="8,4"/>
+      <text x="460" y="8" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="10" fill="rgba(77,143,255,0.5)" letter-spacing="3">ZK PROOF BOUNDARY</text>
+
+      <!-- Any Agent -->
+      <g>
+        <rect x="20" y="75" width="130" height="80" rx="5" fill="rgba(13,42,80,0.9)" stroke="#1a8cff" stroke-width="1.8" filter="url(#glow)"/>
+        <rect x="20" y="75" width="130" height="4" rx="2" fill="#1a8cff" opacity="0.5"/>
+        <text x="85" y="105" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="11" font-weight="700" fill="#1a8cff" letter-spacing="1">ANY AGENT</text>
+        <text x="85" y="122" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7.5" fill="rgba(26,140,255,0.45)">Rust / Python / JS</text>
+        <text x="85" y="136" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7.5" fill="rgba(26,140,255,0.45)">any framework</text>
+      </g>
+
+      <!-- Arrow: Agent -> ZKProxy -->
+      <line x1="150" y1="115" x2="200" y2="115" stroke="#1a8cff" stroke-width="1.8" marker-end="url(#aBlue)" stroke-dasharray="6,3" class="da"/>
+
+      <!-- ZKProxy -->
+      <g>
+        <rect x="200" y="70" width="130" height="90" rx="5" fill="rgba(10,34,68,0.95)" stroke="#4d8fff" stroke-width="2.2" filter="url(#glow)"/>
+        <rect x="200" y="70" width="130" height="4" rx="2" fill="#4d8fff" opacity="0.7"/>
+        <text x="265" y="100" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="12" font-weight="800" fill="#4d8fff" letter-spacing="1">ZKPROXY</text>
+        <text x="265" y="118" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7.5" fill="rgba(77,143,255,0.48)">feature extraction</text>
+        <text x="265" y="132" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7.5" fill="rgba(77,143,255,0.48)">any guardrail engine</text>
+        <text x="265" y="146" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7.5" fill="rgba(77,143,255,0.48)">regex / ML / LLM</text>
+      </g>
+
+      <!-- Arrow: ZKProxy -> ONNX -->
+      <line x1="330" y1="115" x2="380" y2="115" stroke="#4d8fff" stroke-width="1.8" marker-end="url(#aBlue)" stroke-dasharray="6,3" class="da"/>
+
+      <!-- ONNX Model -->
+      <g>
+        <rect x="380" y="60" width="160" height="110" rx="5" fill="rgba(14,42,90,0.85)" stroke="#4d8fff" stroke-width="2" filter="url(#glow)"/>
+        <rect x="380" y="60" width="160" height="4" rx="2" fill="#4d8fff" opacity="0.5"/>
+        <text x="460" y="90" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="11" font-weight="700" fill="#4d8fff" letter-spacing="1">guardrail.onnx</text>
+        <text x="460" y="108" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(77,143,255,0.5)">DSperse / jstprove</text>
+        <text x="460" y="124" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(77,143,255,0.5)">circuit compile + prove</text>
+        <text x="460" y="152" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="7" fill="rgba(77,143,255,0.4)">proof = f(input) verified</text>
+      </g>
+
+      <!-- Arrow: ONNX -> Decision -->
+      <line x1="540" y1="115" x2="590" y2="115" stroke="#4d8fff" stroke-width="1.8" marker-end="url(#aBlue)" stroke-dasharray="6,3" class="db"/>
+
+      <!-- Decision -->
+      <g>
+        <polygon points="640,70 690,115 640,160 590,115" fill="rgba(7,18,40,0.95)" stroke="#4d8fff" stroke-width="2" filter="url(#glow)"/>
+        <text x="640" y="110" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="10" font-weight="800" fill="#4d8fff">VERIFIED</text>
+        <text x="640" y="127" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="14" font-weight="800" fill="#4d8fff">?</text>
+      </g>
+
+      <!-- ALLOW -->
+      <line x1="690" y1="115" x2="770" y2="115" stroke="#00ffaa" stroke-width="2" marker-end="url(#aGreen)" stroke-dasharray="6,3" class="da"/>
+      <text x="730" y="108" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="9" fill="#00ffaa" letter-spacing="1.5" opacity="0.9">ACT</text>
+
+      <!-- BLOCK -->
+      <line x1="640" y1="70" x2="640" y2="35" stroke="#ff3355" stroke-width="2" marker-end="url(#aRed)" stroke-dasharray="6,3" class="da"/>
+      <text x="665" y="50" font-family="'Share Tech Mono',monospace" font-size="9" fill="#ff3355" letter-spacing="1.5" opacity="0.9">BLOCK</text>
+
+      <!-- ACT output -->
+      <g>
+        <rect x="770" y="80" width="130" height="70" rx="5" fill="rgba(0,42,24,0.85)" stroke="#00ffaa" stroke-width="1.8" filter="url(#glowG)"/>
+        <rect x="770" y="80" width="130" height="4" rx="2" fill="#00ffaa" opacity="0.4"/>
+        <text x="835" y="110" text-anchor="middle" font-family="'Oxanium',sans-serif" font-size="11" font-weight="700" fill="#00ffaa" letter-spacing="1">ACTION</text>
+        <text x="835" y="130" text-anchor="middle" font-family="'Share Tech Mono',monospace" font-size="8" fill="rgba(0,255,170,0.5)">proof attached</text>
+      </g>
+
+      <!-- Animated particle -->
+      <circle r="4" fill="#4d8fff" filter="url(#glow)" opacity="0.9">
+        <animateMotion dur="2.5s" repeatCount="indefinite"><mpath href="#flow1"/></animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      <path id="flow1" d="M150,115 L200,115 L330,115 L380,115 L540,115 L590,115" fill="none"/>
+      <circle r="3.5" fill="#00ffaa" filter="url(#glowG)" opacity="0.9">
+        <animateMotion dur="1.5s" repeatCount="indefinite" begin="1.5s"><mpath href="#flow2"/></animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" repeatCount="indefinite" begin="1.5s"/>
+      </circle>
+      <path id="flow2" d="M690,115 L770,115" fill="none"/>
+    </svg>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- PAGE 1: ZKProxy vs IronClaw Comparison                      -->
+  <!-- =========================================================== -->
+  <div class="comparison-page" id="comparison">
+    <div class="divider"></div>
+    <h2 class="section-title">ZKProxy vs Agent-Embedded Security</h2>
+    <p class="intro">ZKProxy is a universal verification protocol. It does not replace guardrails — it proves them. Any guardrail engine (regex, ML, LLM-based) can be wrapped in a ZK circuit. The agent's language, runtime, and architecture become irrelevant. Security shifts from implementation-specific hardening to cryptographic verification.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Dimension</th>
+          <th class="zk-col">ZKProxy (Universal Protocol)</th>
+          <th>IronClaw (Agent-Embedded)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight-row">
+          <td>Philosophy</td>
+          <td class="check">Verify first, act second</td>
+          <td>Detect and react</td>
+        </tr>
+        <tr>
+          <td>Agent Compatibility</td>
+          <td class="check">Any agent, any language, any framework</td>
+          <td class="cross">Rust only, single codebase</td>
+        </tr>
+        <tr>
+          <td>Guardrail Engine</td>
+          <td class="check">Any: regex, ML, LLM, custom ONNX</td>
+          <td class="partial">Aho-Corasick + 4 regex patterns</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Cryptographic Proof</td>
+          <td class="check">Every decision is ZK-proven and verifiable</td>
+          <td class="partial">Optional zkproxy feature flag</td>
+        </tr>
+        <tr>
+          <td>Third-Party Audit</td>
+          <td class="check">Anyone can verify proofs, model stays private</td>
+          <td class="cross">Requires source access or trust</td>
+        </tr>
+        <tr>
+          <td>Computational Overhead</td>
+          <td class="check">Zero overhead on agent side; proving is offloaded</td>
+          <td class="cross">4-subsystem pipeline in agent hot path (4.1 us)</td>
+        </tr>
+        <tr>
+          <td>Secret Management</td>
+          <td class="check">No vault needed: proof-of-correct-execution eliminates trust requirement</td>
+          <td class="partial">Encrypted vault (additional attack surface)</td>
+        </tr>
+        <tr>
+          <td>Network Policy</td>
+          <td class="check">Native: unverified actions cannot execute (no network call without proof)</td>
+          <td class="partial">Allowlist rules (configuration burden, bypass risk)</td>
+        </tr>
+        <tr>
+          <td>Leak Detection</td>
+          <td class="check">Guard model detects patterns; proof attests the scan ran</td>
+          <td class="partial">Regex scanner (no attestation of execution)</td>
+        </tr>
+        <tr class="highlight-row">
+          <td>Adoption Path</td>
+          <td class="check">Drop-in sidecar / proxy. No agent code changes.</td>
+          <td class="cross">Fork the agent codebase or rewrite in Rust</td>
+        </tr>
+        <tr>
+          <td>Sandbox / Enclave</td>
+          <td class="check">Proof integrity is mathematical, not environmental</td>
+          <td class="partial">Requires TEE hardware (Nitro, SGX)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="principle-grid">
+      <div class="principle-card">
+        <h3>Action After Verification</h3>
+        <p>No action executes until a ZK proof confirms the guardrail model approved it. This is not "detect bad input and react" — it is "prove correct behavior before any side effect occurs." The verification gate is cryptographic, not heuristic.</p>
+        <div class="vs">IronClaw: Runs 4 subsystems in series, each can be bypassed independently. No cryptographic binding between detection and action.</div>
+      </div>
+      <div class="principle-card">
+        <h3>Zero Agent-Side Overhead</h3>
+        <p>ZKProxy runs as a sidecar process. The agent sends the prompt, receives allow/block + proof. No safety subsystems to maintain, no Rust dependency, no in-process regex engines consuming CPU in the agent's hot path.</p>
+        <div class="vs">IronClaw: Sanitizer + Validator + PolicyRules + LeakDetector all run inside the agent process. 4.1 us per request in the best case.</div>
+      </div>
+      <div class="principle-card">
+        <h3>Universal Guardrail Support</h3>
+        <p>Any ONNX model becomes a ZK-provable guardrail. Regex patterns, ML classifiers, LLM-based detectors — all compile to circuits. Swap the model, re-compile, deploy. No code changes to the agent or the proxy.</p>
+        <div class="vs">IronClaw: Patterns are hardcoded in Rust source (17 string + 4 regex). Adding a new detection category requires a code change, recompile, and redeploy.</div>
+      </div>
+      <div class="principle-card">
+        <h3>A New Protocol Layer</h3>
+        <p>ZKProxy is to AI agent security what HTTPS is to web transport. It does not dictate what the agent does — it guarantees that every action was verified by a guardrail model and that the verification is cryptographically provable to any third party.</p>
+        <div class="vs">IronClaw: Agent-specific hardening. Every new agent framework must independently implement its own safety pipeline.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================== -->
+  <!-- PAGE 2: Network / VPC Policy vs ZKProxy Native Verification -->
+  <!-- =========================================================== -->
+  <div class="network-page" id="network">
+    <div class="divider"></div>
+    <h2 class="section-title">Network Policy: VPC Allowlisting vs Native Verification</h2>
+    <p class="intro" style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;color:rgba(184,212,240,0.55);line-height:1.8;text-align:center;max-width:860px;margin:0 auto 28px;">Traditional agents enforce network security through VPC rules, firewall allowlists, and deny-by-default policies. These are infrastructure-level controls that must be configured, maintained, and audited separately from the agent logic. ZKProxy eliminates this entire layer: if the action was not verified by a ZK proof, it cannot execute. The network boundary becomes a consequence of verification, not a separate system.</p>
+
+    <div class="net-compare">
+      <div class="net-box legacy">
+        <h3>Traditional: VPC + Allowlisting</h3>
+        <ul>
+          <li>Separate infrastructure layer (VPC, security groups, NACLs)</li>
+          <li>Configuration drift between environments</li>
+          <li>Allowlist maintenance burden (add/remove endpoints)</li>
+          <li>Bypass risk: misconfigured rules, lateral movement</li>
+          <li>No proof that the policy was actually enforced</li>
+          <li>Cloud-provider dependent (AWS/GCP/Azure specific)</li>
+          <li>Agent can still make unauthorized calls within the VPC</li>
+          <li>Audit = log analysis after the fact</li>
+        </ul>
+      </div>
+      <div class="net-box zkp">
+        <h3>ZKProxy: Verification-Native</h3>
+        <ul>
+          <li>No network config needed: unverified actions cannot execute</li>
+          <li>Proof is the authorization: no proof = no action</li>
+          <li>Cloud-agnostic, runs anywhere (local, edge, cloud)</li>
+          <li>No allowlist to maintain or misconfigure</li>
+          <li>Cryptographic guarantee the guardrail ran before any call</li>
+          <li>Third-party verifiable without infrastructure access</li>
+          <li>Zero lateral movement: each action independently verified</li>
+          <li>Audit = mathematical proof, not log correlation</li>
+        </ul>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Security Property</th>
+          <th>VPC / Allowlist Approach</th>
+          <th class="zk-col">ZKProxy Approach</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Exfiltration Prevention</td>
+          <td>Block unauthorized IPs/domains</td>
+          <td class="check">No action without proof; exfiltration is structurally impossible</td>
+        </tr>
+        <tr>
+          <td>C2 Callback Prevention</td>
+          <td>Deny outbound to unknown hosts</td>
+          <td class="check">Agent cannot issue any unverified network call</td>
+        </tr>
+        <tr>
+          <td>Credential Protection</td>
+          <td>Encrypted vault + IAM roles</td>
+          <td class="check">Credentials never need to leave verified execution scope</td>
+        </tr>
+        <tr>
+          <td>Compliance Proof</td>
+          <td>CloudTrail / VPC Flow Logs (reconstructive)</td>
+          <td class="check">ZK proof is real-time, self-contained compliance artifact</td>
+        </tr>
+        <tr>
+          <td>Multi-Cloud</td>
+          <td class="cross">Provider-specific config per cloud</td>
+          <td class="check">Protocol-level, runs identically everywhere</td>
+        </tr>
+        <tr>
+          <td>Setup Complexity</td>
+          <td>VPC + SGs + NACLs + IAM + monitoring</td>
+          <td class="check">Single sidecar process, one config file</td>
+        </tr>
+        <tr>
+          <td>Verification</td>
+          <td class="cross">Trust the infrastructure operator</td>
+          <td class="check">Trustless: anyone can verify the proof</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="protocol-section">
+      <h3>The HTTPS Analogy</h3>
+      <div class="protocol-analogy">
+        <div class="proto-box http">
+          <h4>HTTP (unverified)</h4>
+          <p>Trust the server. Hope the network is safe. No cryptographic guarantee of content integrity.</p>
+        </div>
+        <div class="proto-arrow">&#x2192;</div>
+        <div class="proto-box https">
+          <h4>ZKPS (ZK-Proven Security)</h4>
+          <p>Trust the math. Every guardrail decision is cryptographically proven. Every action is verified before execution.</p>
+        </div>
+      </div>
+      <p style="margin-top:18px;">HTTPS proved that transport security should be a protocol, not a per-application feature. ZKProxy proves the same for AI agent security: verification should be universal, cryptographic, and independent of the agent implementation.</p>
+    </div>
+  </div>
+
+  <!-- Benchmark Results -->
+  <div class="bench-section">
+    <div class="divider"></div>
+    <h2 class="section-title">Benchmark Data</h2>
+
+    <h3>Latency</h3>
+    <table>
+      <thead>
+        <tr><th>Phase</th><th>IronClaw</th><th>ZeroClaw</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Feature extraction (benign)</td><td>2,309 ns</td><td>1,619 ns</td><td>IC 1.43x slower</td></tr>
+        <tr><td>Feature extraction (injection)</td><td>2,573 ns</td><td>2,293 ns</td><td>IC 1.12x slower</td></tr>
+        <tr><td>Pattern guard (benign)</td><td style="color:var(--green)">227 ns</td><td>1,396 ns</td><td>IC 6.2x faster (Aho-Corasick)</td></tr>
+        <tr><td>Pattern guard (injection)</td><td>2,725 ns</td><td>1,443 ns</td><td>ZC 1.9x faster</td></tr>
+        <tr><td>Full safety pipeline</td><td>4,135 ns</td><td>1,785 ns</td><td>IC: 4 subsystems in series</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Detection Accuracy (143 prompts)</h3>
+    <div class="bench-grid">
+      <table>
+        <thead><tr><th>Metric</th><th>IronClaw</th><th>ZeroClaw</th></tr></thead>
+        <tbody>
+          <tr><td>Precision</td><td>78.9%</td><td>82.6%</td></tr>
+          <tr><td>Recall</td><td>41.1%</td><td>52.1%</td></tr>
+          <tr><td><strong>F1 Score</strong></td><td><strong>0.541</strong></td><td><strong>0.639</strong></td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>Category</th><th>IC</th><th>ZC</th></tr></thead>
+        <tbody>
+          <tr><td>system_override</td><td>80%</td><td>80%</td></tr>
+          <tr><td>jailbreak</td><td>0%</td><td style="color:var(--green)">33%</td></tr>
+          <tr><td>role_confusion</td><td>46%</td><td style="color:var(--green)">82%</td></tr>
+          <tr><td>special_tokens</td><td style="color:var(--green)">100%</td><td>60%</td></tr>
+          <tr><td>code_injection</td><td style="color:var(--green)">100%</td><td>0%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="intro" style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:rgba(184,212,240,0.45);line-height:1.7;text-align:center;max-width:860px;margin:12px auto 0;">Both regex engines miss significant fractions. The ZK-attested ONNX guard model closes this gap by learning non-linear feature combinations that individual patterns miss. The ZKProxy approach: let the ML model do the detection, let the ZK proof guarantee the detection ran.</p>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="si"><div class="sd"></div>ZKPROXY PROTOCOL ACTIVE</div>
+    <div class="si"><div class="sd b"></div>VERIFICATION LAYER ONLINE</div>
+    <div class="si" style="color:rgba(96,207,255,0.3);font-size:.6rem">// VERIFY FIRST, ACT SECOND</div>
+  </div>
+</div>
+</body>
+</html>
