@@ -23,6 +23,8 @@ pub use sanitizer::{InjectionWarning, SanitizedOutput, Sanitizer};
 pub use validator::{ValidationResult, Validator};
 
 use crate::config::SafetyConfig;
+#[cfg(feature = "zkproxy")]
+use std::sync::Arc;
 
 /// Unified safety layer combining sanitizer, validator, and policy.
 pub struct SafetyLayer {
@@ -31,6 +33,8 @@ pub struct SafetyLayer {
     policy: Policy,
     leak_detector: LeakDetector,
     config: SafetyConfig,
+    #[cfg(feature = "zkproxy")]
+    zk_proxy: Option<Arc<crate::zkproxy::ZkProxy>>,
 }
 
 impl SafetyLayer {
@@ -42,7 +46,19 @@ impl SafetyLayer {
             policy: Policy::default(),
             leak_detector: LeakDetector::new(),
             config: config.clone(),
+            #[cfg(feature = "zkproxy")]
+            zk_proxy: None,
         }
+    }
+
+    #[cfg(feature = "zkproxy")]
+    pub fn set_zk_proxy(&mut self, proxy: Arc<crate::zkproxy::ZkProxy>) {
+        self.zk_proxy = Some(proxy);
+    }
+
+    #[cfg(feature = "zkproxy")]
+    pub fn zk_proxy(&self) -> Option<&Arc<crate::zkproxy::ZkProxy>> {
+        self.zk_proxy.as_ref()
     }
 
     /// Sanitize tool output before it reaches the LLM.
@@ -205,6 +221,8 @@ mod tests {
         let config = SafetyConfig {
             max_output_length: 100_000,
             injection_check_enabled: true,
+            #[cfg(feature = "zkproxy")]
+            zkproxy: crate::zkproxy::ZkProxyConfig::default(),
         };
         let safety = SafetyLayer::new(&config);
 
@@ -219,6 +237,8 @@ mod tests {
         let config = SafetyConfig {
             max_output_length: 100_000,
             injection_check_enabled: false,
+            #[cfg(feature = "zkproxy")]
+            zkproxy: crate::zkproxy::ZkProxyConfig::default(),
         };
         let safety = SafetyLayer::new(&config);
 

@@ -127,6 +127,7 @@ wasmparser = "0.220"  # WASM binary parsing for validation
 aes-gcm = "0.10"
 hkdf = "0.12"
 sha2 = "0.10"
+hex = "0.4"
 blake3 = "1"
 rand = "0.8"
 subtle = "2"  # Constant-time comparisons for token validation
@@ -170,6 +171,7 @@ tokio-tungstenite = "0.26"
 testcontainers-modules = { version = "0.11", features = ["postgres"] }
 pretty_assertions = "1"
 tempfile = "3"
+criterion = { version = "0.5", features = ["async_tokio"] }
 
 [features]
 default = ["postgres", "libsql", "html-to-markdown"]
@@ -183,11 +185,17 @@ postgres = [
 ]
 libsql = ["dep:libsql"]
 integration = []
+zkproxy = []
 html-to-markdown = ["dep:html-to-markdown-rs", "dep:readabilityrs"]
 
 [[test]]
 name = "html_to_markdown"
 required-features = ["html-to-markdown"]
+
+[[bench]]
+name = "zkproxy"
+harness = false
+required-features = ["zkproxy"]
 
 # The profile that 'cargo dist' will build with
 [profile.dist]

@@ -955,6 +955,8 @@ mod tests {
             safety: Arc::new(SafetyLayer::new(&SafetyConfig {
                 max_output_length: 100_000,
                 injection_check_enabled: true,
+                #[cfg(feature = "zkproxy")]
+                zkproxy: crate::zkproxy::ZkProxyConfig::default(),
             })),
             tools: Arc::new(ToolRegistry::new()),
             workspace: None,
@@ -1199,6 +1201,8 @@ mod tests {
         let safety = SafetyLayer::new(&SafetyConfig {
             max_output_length: 100_000,
             injection_check_enabled: false,
+            #[cfg(feature = "zkproxy")]
+            zkproxy: crate::zkproxy::ZkProxyConfig::default(),
         });
 
         let job_ctx = JobContext::with_user("test", "chat", "test session");
@@ -1228,6 +1232,8 @@ mod tests {
         let safety = SafetyLayer::new(&SafetyConfig {
             max_output_length: 100_000,
             injection_check_enabled: false,
+            #[cfg(feature = "zkproxy")]
+            zkproxy: crate::zkproxy::ZkProxyConfig::default(),
         });
         let job_ctx = JobContext::with_user("test", "chat", "test session");
 

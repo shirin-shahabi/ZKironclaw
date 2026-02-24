@@ -271,6 +271,8 @@ impl TestHarnessBuilder {
         let safety = Arc::new(SafetyLayer::new(&SafetyConfig {
             max_output_length: 100_000,
             injection_check_enabled: false,
+            #[cfg(feature = "zkproxy")]
+            zkproxy: crate::zkproxy::ZkProxyConfig::default(),
         }));
 
         let hooks = Arc::new(HookRegistry::new());

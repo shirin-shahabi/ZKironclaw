@@ -71,6 +71,8 @@ pub mod tunnel;
 pub mod util;
 pub mod worker;
 pub mod workspace;
+#[cfg(feature = "zkproxy")]
+pub mod zkproxy;
 
 #[cfg(test)]
 pub mod testing;
